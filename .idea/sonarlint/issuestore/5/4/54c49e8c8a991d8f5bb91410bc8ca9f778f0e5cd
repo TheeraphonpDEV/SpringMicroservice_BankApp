@@ -4,10 +4,10 @@ Q
 java:S1066P"/Merge this if statement with the enclosing one.(§ıíÍüÿÿÿÿ8ÊÁò§Ë0
 7
 java:S1220""Move this file to a named package.8ÎÁò§Ë0
-s
-java:S2095n"QUse try-with-resources or close this "ReadableByteChannel" in a "finally" clause.(€Ç—øÿÿÿÿ8îÂò§Ë0
 k
 java:S2095o"NUse try-with-resources or close this "FileOutputStream" in a "finally" clause.(„õ½‰8ïÂò§Ë0
+s
+java:S2095n"QUse try-with-resources or close this "ReadableByteChannel" in a "finally" clause.(€Ç—øÿÿÿÿ8îÂò§Ë0
 L
 java:S11970"*Move the array designators [] to the type.(¡şÏÖøÿÿÿÿ8‘Ãò§Ë0
 Z	java:S1061"9Replace this use of System.out or System.err by a logger.(ªõ»ùÿÿÿÿ8’Ãò§Ë0
