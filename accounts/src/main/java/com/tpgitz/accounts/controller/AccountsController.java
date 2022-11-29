@@ -4,18 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.tpgitz.accounts.config.AccountsServiceConfig;
-import com.tpgitz.accounts.model.Accounts;
-import com.tpgitz.accounts.model.Customer;
-import com.tpgitz.accounts.model.Properties;
+import com.tpgitz.accounts.model.*;
 import com.tpgitz.accounts.repository.AccountsRepository;
+import com.tpgitz.accounts.service.client.CardsFeignClient;
+import com.tpgitz.accounts.service.client.LoansFeignClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 @NoRepositoryBean
 @RestController
@@ -26,6 +26,12 @@ public class AccountsController {
 
     @Autowired
     AccountsServiceConfig accountsConfig;
+
+    @Autowired
+    LoansFeignClient loansFeignClient;
+
+    @Autowired
+    CardsFeignClient cardsFeignClient;
 
     @PostMapping("/myAccount")
     public Accounts getAccountDetails(@RequestBody Customer customer) {
@@ -38,6 +44,7 @@ public class AccountsController {
         }
 
     }
+
     @GetMapping("/account/properties")
     public String getPropertyDetails() throws JsonProcessingException {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -45,6 +52,42 @@ public class AccountsController {
                 accountsConfig.getMailDetails(), accountsConfig.getActiveBranches());
         String jsonStr = ow.writeValueAsString(properties);
         return jsonStr;
+    }
+
+    @PostMapping("/myCustomerDetails")
+    @CircuitBreaker(name = "detailsForCustomerSupportApp",fallbackMethod="myCustomerDetailsFallBack")
+    @Retry(name = "retryForCustomerDetails", fallbackMethod = "myCustomerDetailsFallBack")
+    public CustomerDetails myCustomerDetails(@RequestHeader("simpbank-correlation-id") String correlationid, @RequestBody Customer customer) {
+        Accounts accounts = accountsRepository.findByCustomerId(customer.getCustomerId());
+        List<Loans> loans = loansFeignClient.getLoansDetails(correlationid, customer);
+        List<Cards> cards = cardsFeignClient.getCardDetails(correlationid, customer);
+
+        CustomerDetails customerDetails = new CustomerDetails();
+        customerDetails.setAccounts(accounts);
+        customerDetails.setLoans(loans);
+        customerDetails.setCards(cards);
+
+        return customerDetails;
+    }
+
+    private CustomerDetails myCustomerDetailsFallBack(@RequestHeader("simpbank-correlation-id") String correlationid,Customer customer, Throwable t) {
+        Accounts accounts = accountsRepository.findByCustomerId(customer.getCustomerId());
+        List<Loans> loans = loansFeignClient.getLoansDetails(correlationid, customer);
+        CustomerDetails customerDetails = new CustomerDetails();
+        customerDetails.setAccounts(accounts);
+        customerDetails.setLoans(loans);
+        return customerDetails;
+
+    }
+
+    @GetMapping("/sayHello")
+    @RateLimiter(name = "sayHello", fallbackMethod = "sayHelloFallback")
+    public String sayHello() {
+        return "Hello, Welcome to SimpBank";
+    }
+
+    private String sayHelloFallback(Throwable t) {
+        return "Hi, Welcome to SimpBank";
     }
 
 }
