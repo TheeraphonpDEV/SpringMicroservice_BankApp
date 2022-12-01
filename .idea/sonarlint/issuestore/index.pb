@@ -57,5 +57,3 @@ b
 2accounts/docker-compose/default/docker-compose.yml,a\5\a53c17fe832db7693d03785ac051ebaf175c2d3b
 E
 gatewayserver/HELP.md,e\1\e1bba315894434f771e028f3985da1d38afad79d
-‚
-Rgatewayserver/src/main/java/com/tpgitz/gatewayserver/GatewayserverApplication.java,4\b\4b2578492dc2ec5fd8ff3b176364d15193c47b5f
